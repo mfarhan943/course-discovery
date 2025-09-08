@@ -1,5 +1,6 @@
 import os
 import platform
+from django import VERSION as DJANGO_VERSION
 from logging.handlers import SysLogHandler
 from os.path import abspath, dirname, join
 from sys import path
@@ -580,7 +581,17 @@ EMAIL_PORT = 25
 EMAIL_USE_TLS = False
 EXTRA_APPS = []
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
-STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+if DJANGO_VERSION >= (5, 2):
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage"
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+        }
+    }
+else:
+    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
@@ -590,11 +601,23 @@ EDX_DRF_EXTENSIONS = {
     "OAUTH2_USER_INFO_URL": "http://127.0.0.1:8000/oauth2/user_info"
 }
 API_ROOT = None
-MEDIA_STORAGE_BACKEND = {
-    'DEFAULT_FILE_STORAGE': 'django.core.files.storage.FileSystemStorage',
-    'MEDIA_ROOT': MEDIA_ROOT,
-    'MEDIA_URL': MEDIA_URL
-}
+MEDIA_STORAGE_BACKEND = {}
+
+if DJANGO_VERSION >= (5, 2):
+    MEDIA_STORAGE_BACKEND.update({
+        "STORAGES": {
+            "default": {
+                "BACKEND": STORAGES["default"]["BACKEND"],
+            }
+        }
+    })
+else:
+    MEDIA_STORAGE_BACKEND.update({
+        "DEFAULT_FILE_STORAGE": "django.core.files.storage.FileSystemStorage",
+    })
+
+MEDIA_STORAGE_BACKEND["MEDIA_ROOT"] = MEDIA_ROOT
+MEDIA_STORAGE_BACKEND["MEDIA_URL"] = MEDIA_URL
 
 
 # Settings related to the taxonomy_support
